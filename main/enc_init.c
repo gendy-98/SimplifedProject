@@ -83,7 +83,7 @@ void enc_init()
         .command_bits = 3,
         .address_bits = 5,
         .mode = 0,
-        .cs_ena_posttrans = 10,
+        .cs_ena_posttrans = 2,
         .clock_speed_hz = SPI_MASTER_FREQ_8M,
         .spics_io_num = CONFIG_EXAMPLE_ENC28J60_CS_GPIO,
         .queue_size = 20 };                                                                       //

@@ -1,3 +1,0 @@
-source "A:/PROGRAMS/esp4_3/components/bootloader/Kconfig.projbuild"
-source "A:/PROGRAMS/esp4_3/components/esptool_py/Kconfig.projbuild"
-source "A:/PROGRAMS/esp4_3/components/partition_table/Kconfig.projbuild"

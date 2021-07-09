@@ -1,7 +1,0 @@
-source "A:/PROGRAMS/esp4_3/components/efuse/Kconfig"
-source "A:/PROGRAMS/esp4_3/components/esp32/Kconfig"
-source "A:/PROGRAMS/esp4_3/components/esp_common/Kconfig"
-source "A:/PROGRAMS/esp4_3/components/esp_system/Kconfig"
-source "A:/PROGRAMS/esp4_3/components/log/Kconfig"
-source "A:/PROGRAMS/esp4_3/components/newlib/Kconfig"
-source "A:/PROGRAMS/esp4_3/components/spi_flash/Kconfig"

@@ -175,6 +175,7 @@ static esp_err_t enc28j60_do_register_read(emac_enc28j60_t *emac, bool is_eth_re
         ret = ESP_ERR_TIMEOUT;
     }
     if(ret != 0)
+
     printf("\n line 176 ret = %d\n",ret);
     return ret;
 }
@@ -444,14 +445,14 @@ static esp_err_t emac_enc28j60_read_phy_reg(esp_eth_mac_t *mac, uint32_t phy_add
     /* check if phy access is in progress */
     MAC_CHECK(enc28j60_register_read(emac, ENC28J60_MISTAT, &mii_status) == ESP_OK,
               "read MISTAT failed", out, ESP_FAIL);
-    MAC_CHECK(!(mii_status & MISTAT_BUSY), "phy is busy", out, ESP_ERR_INVALID_STATE);
+    MAC_CHECK(!(mii_status & MISTAT_BUSY), "phy is busy", err_mistat, ESP_ERR_INVALID_STATE);
 
     /* tell the PHY address to read */
     MAC_CHECK(enc28j60_register_write(emac, ENC28J60_MIREGADR, phy_reg & 0xFF) == ESP_OK,
               "write MIREGADR failed", out, ESP_FAIL);
-    MAC_CHECK(enc28j60_register_read(emac, ENC28J60_MICMD, &mii_cmd) == ESP_OK,
-              "read MICMD failed", out, ESP_FAIL);
-    mii_cmd |= MICMD_MIIRD;
+    /*MAC_CHECK(enc28j60_register_read(emac, ENC28J60_MICMD, &mii_cmd) == ESP_OK,
+                "read MICMD failed", out, ESP_FAIL);*/
+    mii_cmd = MICMD_MIIRD;
     MAC_CHECK(enc28j60_register_write(emac, ENC28J60_MICMD, mii_cmd) == ESP_OK,
               "write MICMD failed", out, ESP_FAIL);
 
@@ -478,8 +479,18 @@ static esp_err_t emac_enc28j60_read_phy_reg(esp_eth_mac_t *mac, uint32_t phy_add
               "read MIRDH failed", out, ESP_FAIL);
     *reg_value = (value_h << 8) | value_l;
 out:
-    if(ret != 0)
-    printf("\n line 468 ret = %d\n",ret);
+    return ret;
+err_mistat:
+    printf("MISTAT 0x%x\n", mii_status);
+    uint8_t reg = 0;
+    enc28j60_register_read(emac, ENC28J60_MAMXFLL, &reg);
+    printf("MAMXFLL 0x%x\n", reg);
+    reg = 0;
+    enc28j60_register_read(emac, ENC28J60_EPMM2, &reg);
+    printf("EPMM2 0x%x\n", reg);
+    reg = 0;
+    enc28j60_register_read(emac, ENC28J60_ERXNDL, &reg);
+    printf("ENC28J60_ERXNDL 0x%x\n", reg);
     return ret;
 }
 
@@ -702,9 +713,15 @@ static void emac_enc28j60_task(void *arg)
     uint32_t length = 0;
 
     while (1) {
-        // block indefinitely until some task notifies me
-        ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
-        /* clear interrupt status */
+        // block until some task notifies me or check the gpio by myself
+        if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000)) == 0 &&    // if no notification ...
+            gpio_get_level(emac->int_gpio_num) != 0) {               // ...and no interrupt asserted
+            continue;                                                // -> just continue to check again
+        }
+        //ESP_LOGI("dbg", "irq");
+        // the host controller should clear the global enable bit for the interrupt pin before servicing the interrupt
+        enc28j60_do_bitwise_clr(emac, ENC28J60_EIR, EIE_INTIE); // todo: err handling
+        /* read interrupt status */
         enc28j60_do_register_read(emac, true, ENC28J60_EIR, &status);
         /* packet received */
         if (status & EIR_PKTIF) {
@@ -717,14 +734,19 @@ static void emac_enc28j60_task(void *arg)
                     /* pass the buffer to stack (e.g. TCP/IP layer) */
                     if (length) {
                         emac->eth->stack_input(emac->eth, buffer, length);
+                        ESP_LOGI("dbg", "rx: %d", length);
                     } else {
                         free(buffer);
+                        ESP_LOGI("dbg", "rx: 0!!");
                     }
                 } else {
                     free(buffer);
                 }
             } while (emac->packets_remain);
         }
+        // restore global enable interrupt bit
+        enc28j60_do_bitwise_set(emac, ENC28J60_EIE, EIE_INTIE); // todo: err handling
+        // Note: Interrupt flag PKTIF is cleared when PKTDEC is set (in receive function)
     }
     vTaskDelete(NULL);
 }
@@ -821,6 +843,8 @@ static esp_err_t emac_enc28j60_transmit(esp_eth_mac_t *mac, uint8_t *buf, uint32
     esp_err_t ret = ESP_OK;
     emac_enc28j60_t *emac = __containerof(mac, emac_enc28j60_t, parent);
     uint8_t econ1 = 0;
+
+    ESP_LOGI("dbg", "tx: %d", length);
 
     /* Check if last transmit complete */
     MAC_CHECK(enc28j60_do_register_read(emac, true, ENC28J60_ECON1, &econ1) == ESP_OK,
