@@ -112,7 +112,7 @@ extern "C" {
 #define ENC28J60_MACLCON2 (0x1209) // Collision Window (COLWIN<5:0>)
 #define ENC28J60_MAMXFLL  (0x120A) // Maximum Frame Length Low Byte (MAMXFL<7:0>)
 #define ENC28J60_MAMXFLH  (0x120B) // Maximum Frame Length High Byte (MAMXFL<15:8>)
-#define ENC28J60_MICMD    (0x0212) // MII Command Register
+#define ENC28J60_MICMD    (0x1212) // MII Command Register
 #define ENC28J60_MIREGADR (0x1214) // MII Register Address (MIREGADR<4:0>)
 #define ENC28J60_MIWRL    (0x1216) // MII Write Data Low Byte (MIWR<7:0>)
 #define ENC28J60_MIWRH    (0x1217) // MII Write Data High Byte (MIWR<15:8>)
@@ -130,7 +130,7 @@ extern "C" {
 #define ENC28J60_EBSTCON  (0x0307) // Built-in Self-Test Control
 #define ENC28J60_EBSTCSL  (0x0308) // Built-in Self-Test Checksum Low Byte (EBSTCS<7:0>)
 #define ENC28J60_EBSTCSH  (0x0309) // Built-in Self-Test Checksum High Byte (EBSTCS<15:8>)
-#define ENC28J60_MISTAT   (0x030A) // MII Status Register
+#define ENC28J60_MISTAT   (0x130A) // MII Status Register
 #define ENC28J60_EREVID   (0x0312) // Ethernet Revision ID (EREVID<4:0>)
 #define ENC28J60_ECOCON   (0x0315) // Clock Output Control Register
 #define ENC28J60_EFLOCON  (0x0317) // Ethernet Flow Control

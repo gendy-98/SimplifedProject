@@ -77,7 +77,7 @@ void enc_init()
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
     };                                                                                 //
-    ESP_ERROR_CHECK(spi_bus_initialize(CONFIG_EXAMPLE_ENC28J60_SPI_HOST, &buscfg, 1)); //
+    ESP_ERROR_CHECK(spi_bus_initialize(CONFIG_EXAMPLE_ENC28J60_SPI_HOST, &buscfg, SPI_DMA_CH_AUTO)); //
     /* ENC28J60 ethernet driver is based on spi driver */
     spi_device_interface_config_t devcfg ={
         .command_bits = 3,
@@ -147,6 +147,14 @@ void enc_init()
     /* start Ethernet driver state machine */
     ESP_ERROR_CHECK(esp_eth_start(eth_handle));
     //s_connection_name = "Ethernet";
+
+   /* bool eth_set_promiscuous = true;
+    ret = esp_eth_ioctl(eth_handle, ETH_CMD_S_PROMISCUOUS, &eth_set_promiscuous);
+    if(ret == ESP_OK){
+        ESP_LOGI(TAG, "ETH_CMD_S_PROMISCUOUS OK");
+    } else {
+        ESP_LOGI(TAG, "ETH_CMD_S_PROMISCUOUS not OK");
+    }*/
 }
 
 /** Event handler for Ethernet events */
